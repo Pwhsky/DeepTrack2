@@ -1,20 +1,31 @@
-"""Implementations of Feature the model scattering objects.
+"""Classes that implement scatterers.
 
-Provides some basic implementations of scattering objects
-that are frequently used.
+This module provides implementations of scattering objects
+that are frequently used, such as 2D point particles or
+3D ellipsoids. 
 
-Classes
+The properties of the scatterer objects 
+
+Key Features
+------------
+
+Module Structure
+----------------
+
+Scatterer: Abstract base class for scatterers
+PointParticle: Generates point particles
+Ellipse: Generetes 2-d elliptical particles
+Sphere: Generates 3-d spheres
+Ellipsoid: Generates 3-d ellipsoids
+MieScatterer: Mie scatterer base class.
+MieSphere: Extends `MieScatterer`.
+MieStratifiedSphere: Extends `MieScatterer`.
+
+Examples
 --------
-Scatterer
-    Abstract base class for scatterers
-PointParticle
-    Generates point particles
-Ellipse
-    Generetes 2-d elliptical particles
-Sphere
-    Generates 3-d spheres
-Ellipsoid
-    Generates 3-d ellipsoids
+
+
+
 """
 
 
@@ -30,10 +41,11 @@ from deeptrack.backend.units import (
     get_active_scale,
     get_active_voxel_size,
 )
+
+from .features import Feature, MERGE_STRATEGY_APPEND
 from .types import PropertyLike, ArrayLike
 from . import image
 from . import backend as D
-from .features import Feature, MERGE_STRATEGY_APPEND
 from . import pad_image_to_fft, Image
 from . import units as u
 

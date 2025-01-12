@@ -1,25 +1,65 @@
 """Classes that implement scatterers.
 
 This module provides implementations of scattering objects
-that are frequently used, such as 2D point particles or
-3D ellipsoids. 
+with geometries that are commonly observed in experimental setups 
+such as ellipsoids, spheres, or point-particles.
+
+These scatterer objects are primarily used in combination with the `Optics`
+module to simulate how a (e.g. brightfield) microscope would resolve the 
+object for a given optical setup (NA, wavelength, Refractive Index etc.).
+
 
 The properties of the scatterer objects 
 
 Key Features
 ------------
+- **Customizable geometries**
+
+    The initialization parameters allow the user to choose proportions and 
+    positioning of the scatterer in the image. It is also possible to combine 
+    multiple scatterers and overlay them, e.g. two ellipses orthogonal to each other
+    would form a plus-shape or combining two spheres (one small, one large) to simulate
+    a hollow core-shell particle.
+    
+    
+- **Defocusing**
+
+    As the `z` parameter represents the scatterers position in relation to the focal
+    point of the microscope, the user can simulate defocusing by setting this parameter
+    to be non-zero.
+    
+- **Mie scatterers**
+    
 
 Module Structure
 ----------------
+Classes:
 
-Scatterer: Abstract base class for scatterers
-PointParticle: Generates point particles
-Ellipse: Generetes 2-d elliptical particles
-Sphere: Generates 3-d spheres
-Ellipsoid: Generates 3-d ellipsoids
-MieScatterer: Mie scatterer base class.
-MieSphere: Extends `MieScatterer`.
-MieStratifiedSphere: Extends `MieScatterer`.
+- `Scatterer`: Abstract base class for scatterers.
+
+    This abstract class stores positional information about the scatterer
+    and implements the `_process_properties` method to convert the position
+    to voxel units, as well as the `_process_and_get` method to upsample the 
+    calculation and crop empty slices.
+
+- `PointParticle`: Generates point particles with the size of 1 pixel.
+
+- `Ellipse`: Generates 2-D elliptical particles.
+
+- `Sphere`: Generates 3-D spheres.
+
+- `Ellipsoid`: Generates 3-D ellipsoids.
+
+- `MieScatterer`: Mie scatterer base class.
+
+- `MieSphere`: Extends `MieScatterer` for the spherical case.
+
+- `MieStratifiedSphere`:  Extends `MieScatterer` for the stratified sphere case.
+
+    A stratified sphere is a sphere with several concentric shells of uniform
+    refractive index, calculates the scattered field in a homogenous medium.
+
+    
 
 Examples
 --------
@@ -82,11 +122,11 @@ class Scatterer(Feature):
     position_unit: "meter" or "pixel"
         The unit of the provided position property.
 
-    upsample_axes : tuple of ints
+    upsample_axes: tuple of ints
         Sets the axes along which the calculation is upsampled (default is
         None, which implies all axes are upsampled).
         
-    crop_zeros : bool
+    crop_zeros: bool
         Whether to remove slices in which all elements are zero.
         
     """
@@ -215,7 +255,7 @@ class PointParticle(Scatterer):
     Parameters
     ----------
     position: array_like of length 2 or 3
-        The position of the  particle. Third index is optional,
+        The position of the particle. Third index is optional,
         and represents the position in the direction normal to the
         camera plane.
         
@@ -407,7 +447,12 @@ class Sphere(Scatterer):
         x = np.arange(-rad_ceil[0], rad_ceil[0])
         y = np.arange(-rad_ceil[1], rad_ceil[1])
         z = np.arange(-rad_ceil[2], rad_ceil[2])
-        X, Y, Z = np.meshgrid((y / rad[1]) ** 2, (x / rad[0]) ** 2, (z / rad[2]) ** 2)
+        
+        X, Y, Z = np.meshgrid(
+            (y / rad[1]) ** 2,
+            (x / rad[0]) ** 2,
+            (z / rad[2]) ** 2
+        )
 
         mask = (X + Y + Z <= 1) * 1.0
         return mask
@@ -567,65 +612,77 @@ class MieScatterer(Scatterer):
 
     New Mie-theory scatterers can be implemented by extending this class, and
     passing a function that calculates the coefficients of the harmonics up to
-    order `L`. To beprecise, the feature expects a wrapper function that takes
+    order `L`. To be precise, the feature expects a wrapper function that takes
     the current values of the properties, as well as a inner function that
     takes an integer as the only parameter, and calculates the coefficients up
     to that integer. The return format is expected to be a tuple with two
-    values, corresponding to `an` and `bn`. See
-    `deeptrack.backend.mie.coefficients` for an example.
+    values, corresponding to `an` and `bn`.
+    See `deeptrack.backend.mie.coefficients` for an example.
 
     Attributes
     ----------
     coefficients: Callable[int] -> Tuple[ndarray, ndarray]
+    
         Function that returns the harmonics coefficients.
         
     offset_z: "auto" or float
+    
         Distance from the particle in the z direction the field is evaluated.
         If "auto", this is calculated from the pixel size and
         `collection_angle`.
         
     collection_angle: "auto" or float
+    
         The maximum collection angle in radians. If "auto", this
         is calculated from the objective NA (which is true if the objective is
         the limiting aperature).
         
     input_polarization: float or Quantity
+    
         Defines the polarization angle of the input. For simulating circularly
         polarized light we recommend a coherent sum of two simulated fields. For
         unpolarized light we recommend a incoherent sum of two simulated fields. 
         If defined as "circular", the coefficients are set to 1/2.
         
     output_polarization: float or Quantity or None
+    
         If None, the output light is not polarized. Otherwise defines the angle of the
         polarization filter after the sample. For off-axis, keep the same as input_polarization.
         If defined as "circular", the coefficients are multiplied by 1. I.e. no change.
         
     L: int or str
+    
         The number of terms used to evaluate the mie theory. If `"auto"`,
         it determines the number of terms automatically.
         
-    position : array_like[float, float (, float)]
+    position: array_like[float, float (, float)]
+    
         The position of the particle. Third index is optional,
         and represents the position in the direction normal to the
         camera plane.
         
     z: float
+    
         The position in the direction normal to the
         camera plane. Used if `position` is of length 2.
         
     return_fft: bool
+    
         If True, the feature returns the fft of the field, rather than the
         field itself.
         
     coherence_length: float
+    
         The temporal coherence length of a partially coherent light given in meters. 
         If None, the illumination is assumed to be coherent.
         
     amp_factor: float
+    
         A factor that scales the amplification of the field. 
         This is useful for scaling the field to the correct intensity. Default is 1.
         
     phase_shift_correction: bool
+    
         If True, the feature applies a phase shift correction to the output field. 
         This is necessary for ISCAT simulations. 
         The correction depends on the k-vector and z according to the formula: 
@@ -961,7 +1018,7 @@ class MieSphere(MieScatterer):
         The position in the direction normal to the
         camera plane. Used if `position` is of length 2.
         
-    offset_z : "auto" or float
+    offset_z: "auto" or float
         Distance from the particle in the z direction the field is evaluated.
         If "auto", this is calculated from the pixel size and
         `collection_angle`.
@@ -1021,46 +1078,56 @@ class MieStratifiedSphere(MieScatterer):
     Should be calculated on at least a 64 by 64 grid. Use padding in the
     optics if necessary
 
-    Calculates the scattered field by in a homogenous medium, as predicted by
+    Calculates the scattered field in a homogenous medium, as predicted by
     Mie theory. Note that the induced phase shift is calculated in comparison
     to the `refractive_index_medium` property of the optical device.
 
     Parameters
     ----------
     radius: list of float
+    
         The radius of each cell in increasing order.
         
     refractive_index: list of float
+    
         Refractive index of each cell in the same order as `radius`.
+        
     L: int or str
+    
         The number of terms used to evaluate the mie theory. If `"auto"`,
         it determines the number of terms automatically.
         
     position: array_like[float, float (, float)]
+    
         The position of the particle. Third index is optional,
         and represents the position in the direction normal to the
         camera plane.
         
     z: float
+    
         The position in the direction normal to the
         camera plane. Used if `position` is of length 2.
         
     offset_z: "auto" or float
+    
         Distance from the particle in the z direction the field is evaluated.
         If "auto", this is calculated from the pixel size and
         `collection_angle`.
         
     collection_angle: "auto" or float
+    
         The maximum collection angle in radians. If "auto", this
         is calculated from the objective NA (which is true if the objective
         is the limiting aperature).
         
     input_polarization: float or Quantity
+    
         Defines the polarization angle of the input. For simulating circularly
         polarized light we recommend a coherent sum of two simulated fields. For
         unpolarized light we recommend a incoherent sum of two simulated fields.
         
     output_polarization: float or Quantity or None
+    
         If None, the output light is not polarized. Otherwise defines the angle of the
         polarization filter after the sample. For off-axis, keep the same as input_polarization.
         

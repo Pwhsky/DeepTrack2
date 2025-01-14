@@ -72,7 +72,7 @@ Examples
 """
 
 
-from typing import Callable, Tuple, Union
+from typing import Callable, Tuple, Union, Dict
 import warnings
 
 from pint import Quantity
@@ -442,7 +442,7 @@ class Sphere(Scatterer):
         radius: PropertyLike[float],
         voxel_size: PropertyLike[float],
         **kwargs
-    ):
+    ) -> np.ndarray:
 
         # Create a grid to calculate on.
         rad = radius * np.ones(3) / voxel_size
@@ -512,7 +512,10 @@ class Ellipsoid(Scatterer):
             radius=radius, rotation=rotation, transpose=transpose, **kwargs
         )
 
-    def _process_properties(self, propertydict):
+    def _process_properties(
+        self,
+        propertydict: Dict
+    ):
         """Preprocess the input to the method .get()
 
         Ensures that the radius and the rotation properties both are arrays of
@@ -712,19 +715,19 @@ class MieScatterer(Scatterer):
         offset_z: PropertyLike[str] = "auto",
         collection_angle: PropertyLike[str] = "auto",
         L: PropertyLike[str] = "auto",
-        refractive_index_medium=None,
-        wavelength=None,
-        NA=None,
+        refractive_index_medium: float=None,
+        wavelength=: float=None,
+        NA: float=None,
         padding=(0,) * 4,
         output_region=None,
-        polarization_angle=None,
-        working_distance=1000000,  # Large value to avoid numerical issues.
-        position_objective=(0, 0),
-        return_fft=False,
-        coherence_length=None,
-        illumination_angle=0,
-        amp_factor=1,
-        phase_shift_correction=False,
+        polarization_angle: float=None,
+        working_distance: float=1000000,  # Large value to avoid numerical issues.
+        position_objective: Tuple[float, float (, float)]=(0, 0),
+        return_fft: bool=False,
+        coherence_length: float=None,
+        illumination_angle: float=0,
+        amp_factor: float=1,
+        phase_shift_correction: bool=False,
         **kwargs,
     ) -> None:
         if polarization_angle is not None:
@@ -760,7 +763,10 @@ class MieScatterer(Scatterer):
             **kwargs,
         )
 
-    def _process_properties(self, properties):
+    def _process_properties(
+        self,
+        properties: Dict
+    ) -> Dict:
 
         properties = super()._process_properties(properties)
 
@@ -791,21 +797,40 @@ class MieScatterer(Scatterer):
             )
         return properties
 
-    def get_xy_size(self, output_region, padding):
+    def get_xy_size(
+        self,
+        output_region: np.ndarray,
+        padding: np.ndarray
+    ) -> np.ndarray:
         return (
             output_region[2] - output_region[0] + padding[0] + padding[2],
             output_region[3] - output_region[1] + padding[1] + padding[3],
         )
 
-    def get_XY(self, shape, voxel_size):
+    def get_XY(
+        self,
+        shape: np.ndarray,
+        voxel_size: np.ndarray
+    ) -> :
         x = np.arange(shape[0]) - shape[0] / 2
         y = np.arange(shape[1]) - shape[1] / 2
         return np.meshgrid(x * voxel_size[0], y * voxel_size[1], indexing="ij")
 
-    def get_detector_mask(self, X, Y, radius):
+    def get_detector_mask(
+        self,
+        X: float,
+        Y: float,
+        radius: float
+    ):
         return np.sqrt(X**2 + Y**2) < radius
 
-    def get_plane_in_polar_coords(self, shape, voxel_size, plane_position, illumination_angle):
+    def get_plane_in_polar_coords(
+        self,
+        shape: int,
+        voxel_size: np.ndarray,
+        plane_position: float,
+        illumination_angle: float
+    ) -> Tuple[float, float, float, float]:
 
         X, Y = self.get_XY(shape, voxel_size)
         X = image.maybe_cupy(X)
@@ -829,28 +854,28 @@ class MieScatterer(Scatterer):
     def get(
         self,
         inp,
-        position,
-        voxel_size,
+        position: np.ndarray,
+        voxel_size: np.ndarray,
         padding,
         wavelength,
         refractive_index_medium,
-        L,
-        collection_angle,
-        input_polarization,
-        output_polarization,
+        L: int,
+        collection_angle: float,
+        input_polarization: float,
+        output_polarization: float,
         coefficients,
-        offset_z,
-        z,
-        working_distance,
-        position_objective,
+        offset_z: float,
+        z: float,
+        working_distance: float,
+        position_objective: float,
         return_fft,
-        coherence_length,
+        coherence_length: float,
         output_region,
-        illumination_angle,
-        amp_factor,
-        phase_shift_correction,
+        illumination_angle: float,
+        amp_factor:float,
+        phase_shift_correction: bool,
         **kwargs,
-    ):
+    ) -> np.ndarray:
         # Get size of the output.
         xSize, ySize = self.get_xy_size(output_region, padding)
         voxel_size = get_active_voxel_size()
@@ -1048,7 +1073,12 @@ class MieSphere(MieScatterer):
         refractive_index: PropertyLike[float] = 1.45,
         **kwargs,
     ) -> None:
-        def coeffs(radius, refractive_index, refractive_index_medium, wavelength):
+        def coeffs(
+            radius: float,
+            refractive_index: float,
+            refractive_index_medium: float,
+            wavelength: float
+        ):
 
             if isinstance(radius, Quantity):
                 radius = radius.to("m").magnitude
@@ -1142,12 +1172,19 @@ class MieStratifiedSphere(MieScatterer):
         refractive_index: PropertyLike[ArrayLike[float]] = [1.45],
         **kwargs,
     ) -> None:
-        def coeffs(radius, refractive_index, refractive_index_medium, wavelength):
+        def coeffs(
+            radius: Union[int, str],
+            refractive_index: float,
+            refractive_index_medium: float,
+            wavelength: float
+        ):
             assert np.all(
                 radius[1:] >= radius[:-1]
             ), "Radius of the shells of a stratified sphere should be monotonically increasing"
 
-            def inner(L):
+            def inner(
+                L: int
+            ):
                 return D.mie.stratified_coefficients(
                     np.array(refractive_index) / refractive_index_medium,
                     np.array(radius) * 2 * np.pi / wavelength * refractive_index_medium,

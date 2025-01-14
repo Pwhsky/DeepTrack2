@@ -1,4 +1,4 @@
-"""Classes that implement scatterers.
+"""Classes that implement light-scattering objects.
 
 This module provides implementations of scattering objects
 with geometries that are commonly observed in experimental setups 
@@ -10,6 +10,7 @@ object for a given optical setup (NA, wavelength, Refractive Index etc.).
 
 Key Features
 ------------
+
 - **Customizable geometries**
 
     The initialization parameters allow the user to choose proportions and 
@@ -25,6 +26,13 @@ Key Features
     to be non-zero.
     
 - **Mie scatterers**
+
+    Implements Mie-theory scatterers that calculates harmonics up to a desired order with
+    functions and utilities from `deeptrack.backend.mie`. Includes the case of a spherical
+    Mie scatterer, and a stratified spherical scatterer which is a sphere with several
+    concentric shells of uniform refractive index.
+    
+    
     
 
 Module Structure

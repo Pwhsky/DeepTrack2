@@ -8,9 +8,6 @@ These scatterer objects are primarily used in combination with the `Optics`
 module to simulate how a (e.g. brightfield) microscope would resolve the 
 object for a given optical setup (NA, wavelength, Refractive Index etc.).
 
-
-The properties of the scatterer objects 
-
 Key Features
 ------------
 - **Customizable geometries**
@@ -20,7 +17,6 @@ Key Features
     multiple scatterers and overlay them, e.g. two ellipses orthogonal to each other
     would form a plus-shape or combining two spheres (one small, one large) to simulate
     a hollow core-shell particle.
-    
     
 - **Defocusing**
 
@@ -38,11 +34,12 @@ Classes:
 - `Scatterer`: Abstract base class for scatterers.
 
     This abstract class stores positional information about the scatterer
-    and implements the `_process_properties` method to convert the position
-    to voxel units, as well as the `_process_and_get` method to upsample the 
-    calculation and crop empty slices.
+    and implements a method to convert the position to voxel units,
+    as well as the a methods to upsample and crop.
 
 - `PointParticle`: Generates point particles with the size of 1 pixel.
+
+    Represented as a numpy array of ones.
 
 - `Ellipse`: Generates 2-D elliptical particles.
 
@@ -57,9 +54,7 @@ Classes:
 - `MieStratifiedSphere`:  Extends `MieScatterer` for the stratified sphere case.
 
     A stratified sphere is a sphere with several concentric shells of uniform
-    refractive index, calculates the scattered field in a homogenous medium.
-
-    
+    refractive index.
 
 Examples
 --------

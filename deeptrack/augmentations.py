@@ -1,4 +1,4 @@
-"""Classes to augment images.
+"""Classes to augment images. 
 
 This module provides the `augmentations` DeepTrack2 classes
 that manipulates an image object with various transformations.

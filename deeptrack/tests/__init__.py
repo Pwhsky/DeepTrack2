@@ -5,6 +5,7 @@
 #from .test_augmentations import *
 #from .test_elementwise import *
 #from .test_features import *
+#from .test_readme import *
 #from .test_image import *
 #from .test_math import *
 #from .test_noises import *

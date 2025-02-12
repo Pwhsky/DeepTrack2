@@ -90,6 +90,41 @@ Reuse the output of a pipeline twice, augmented randomly by FlipLR.
     >>> image = optics(particle) >> pipeline
     >>> image.plot()
 
+Augment an image with random rotations and translations, followed by elastic transformations.
+
+    >>> import random
+
+    >>> import deeptrack as dt
+    >>> from math import pi
+
+
+    >>> particle = dt.Ellipse(radius=(.5e-6, 2e-6),
+    ...                       position = (64, 64),
+    >>> )
+    >>> optics = dt.Fluorescence(
+    ...     output_region=(0, 0, 128, 128)
+    >>> )
+
+    >>> image = optics(particle)
+
+    >>> # Augment randomly with Affine
+    >>> augmented_image = (image
+    ...     >> dt.Affine(rotate=lambda: random.random() * 2 * pi)
+    ...     >> dt.Affine(translate=lambda: random.random() * 10) 
+    >>> )
+    
+    >>> augmented_image = (augmented_image
+    >>>     >> dt.ElasticTransformation(
+    ...         alpha=10,
+    ...         sigma= 2,
+    ...         ignore_last_dim = True,
+    ...         order= 3,
+    ...         cval= 0,
+    ...         mode="constant",)
+    >>> )
+    >>> augmented_image.plot()
+
+    
 
 """
 

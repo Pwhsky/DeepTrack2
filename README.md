@@ -1,6 +1,6 @@
 <!-- GH_ONLY_START -->
 <p align="center">
-  <img width="350" src=https://github.com/DeepTrackAI/DeepTrack2/blob/develop/assets/logo.png?raw=true>
+  <img width="350" src=https://github.com/DeepTrackAI/DeepTrack2/blob/develop/assets/DeepTrack2-logo.png?raw=true>
 </p>
 <!-- GH_ONLY_END -->
 
